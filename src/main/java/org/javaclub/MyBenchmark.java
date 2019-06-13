@@ -31,14 +31,74 @@
 
 package org.javaclub;
 
-import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+@Warmup(iterations = 3, time = 5)
+@Timeout(time = 10)
+@Threads(value = 1)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@State(Scope.Thread)
+@Measurement(iterations = 3, time = 5)
 public class MyBenchmark {
 
+    public static void main(String[] args) throws Exception {
+        Options opt = new OptionsBuilder()
+                .include(MyBenchmark.class.getSimpleName())
+                .forks(1)
+                .build();
+        new Runner(opt).run();
+    }
+
+    private final int TEST_ELEM_NUM = 1_000;
+
+    HashMap<String, String> map  = new HashMap<>();
+    List<String> array = new ArrayList<>();
+    List<String> list = new LinkedList<>();
+    List<String> listSync = Collections.synchronizedList(new ArrayList<>());
+
+    @Setup
+    public void setup() {
+        map.put("1", "1");
+    }
+
     @Benchmark
-    public void testMethod() {
-        // This is a demo/sample template for building your JMH benchmarks. Edit as needed.
-        // Put your benchmark code here.
+    public void testGetHashMap(Blackhole hole) {
+        hole.consume(map.get('1'));
+    }
+
+    @Benchmark
+    public void testArray(Blackhole hole) {
+        for (int i = 0; i < TEST_ELEM_NUM; i++) {
+            array.add(Integer.toString(i));
+        }
+
+        hole.consume(array);
+    }
+
+    @Benchmark
+    public void testList(Blackhole hole) {
+        for (int i = 0; i < TEST_ELEM_NUM; i++) {
+            list.add(Integer.toString(i));
+        }
+
+        hole.consume(list);
+    }
+
+    @Benchmark
+    public void testListSync(Blackhole hole) {
+        for (int i = 0; i < TEST_ELEM_NUM; i++) {
+            listSync.add(Integer.toString(i));
+        }
+
+        hole.consume(listSync);
     }
 
 }
